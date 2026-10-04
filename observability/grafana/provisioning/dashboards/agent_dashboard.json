@@ -1,0 +1,76 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "title": "Agent Total Executions",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "sum(agent_runs_total) or vector(0)", "legendFormat": "Total Runs" }
+      ]
+    },
+    {
+      "title": "Agent Errors",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+      "targets": [
+        { "expr": "sum(agent_errors_total) or vector(0)", "legendFormat": "Errors" }
+      ]
+    },
+    {
+      "title": "LLM Tokens Consumed",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+      "targets": [
+        { "expr": "sum(llm_total_tokens_total) or vector(0)", "legendFormat": "Total Tokens" }
+      ]
+    },
+    {
+      "title": "Estimated LLM Cost (USD)",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+      "targets": [
+        { "expr": "sum(llm_cost_usd_total) or vector(0)", "legendFormat": "Cost ($)" }
+      ]
+    },
+    {
+      "title": "Token Consumption Breakdown (Input vs Output)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "targets": [
+        { "expr": "sum(llm_input_tokens_total)", "legendFormat": "Input Tokens" },
+        { "expr": "sum(llm_output_tokens_total)", "legendFormat": "Output Tokens" }
+      ]
+    },
+    {
+      "title": "LLM Latency & Tool Execution Latency",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "targets": [
+        { "expr": "rate(llm_call_duration_seconds_sum[1m])", "legendFormat": "LLM Latency" },
+        { "expr": "rate(tool_call_duration_seconds_sum[1m])", "legendFormat": "Tool Latency" }
+      ]
+    },
+    {
+      "title": "Agent Structured Logs (Correlated with Traces)",
+      "type": "logs",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 14 },
+      "targets": [
+        { "datasource": { "type": "loki", "uid": "Loki" }, "expr": "{job=\"observable-agent\"}" }
+      ]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["observability", "agent", "opentelemetry"],
+  "time": { "from": "now-15m", "to": "now" },
+  "title": "Observable Agent Overview",
+  "uid": "observable-agent-dash"
+}

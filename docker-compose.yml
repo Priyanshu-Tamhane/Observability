@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  agent:
+    build: .
+    container_name: observable-agent
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=observable-agent
+      - ENV=production
+      - LOG_LEVEL=INFO
+      - LLM_PROVIDER=mock
+      - LLM_MODEL=mock-gpt-4o
+      - OTEL_SERVICE_NAME=observable-agent
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+    depends_on:
+      - otel-collector
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.96.0
+    container_name: otel-collector
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./observability/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml
+    ports:
+      - "4317:4317" # OTLP gRPC receiver
+      - "4318:4318" # OTLP HTTP receiver
+      - "8889:8889" # Prometheus metrics exporter
+    depends_on:
+      - tempo
+      - loki
+
+  tempo:
+    image: grafana/tempo:2.4.0
+    container_name: tempo
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./observability/tempo.yaml:/etc/tempo.yaml
+    ports:
+      - "3200:3200" # Tempo HTTP
+
+  loki:
+    image: grafana/loki:3.0.0
+    container_name: loki
+    command: ["-config.file=/etc/loki-config.yaml"]
+    volumes:
+      - ./observability/loki-config.yaml:/etc/loki-config.yaml
+    ports:
+      - "3100:3100" # Loki HTTP
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    volumes:
+      - ./observability/prometheus.yaml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:10.4.1
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+      - tempo
+      - loki
